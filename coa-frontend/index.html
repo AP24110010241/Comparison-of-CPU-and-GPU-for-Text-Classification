@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CPU vs GPU Text Classification | COA Project</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ========== NAVIGATION ========== -->
+  <nav class="navbar">
+    <div class="nav-brand">COA Project</div>
+    <ul class="nav-links">
+      <li><a href="#home" class="nav-link active">Home</a></li>
+      <li><a href="#classify" class="nav-link">Classify</a></li>
+      <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
+      <li><a href="#about" class="nav-link">About</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">☰</button>
+  </nav>
+
+  <!-- ========== HERO / HOME ========== -->
+  <section id="home" class="hero">
+    <div class="container">
+      <h1>Architectural Performance Comparison of<br>CPU and GPU for Text Classification</h1>
+      <p class="hero-subtitle">
+        A Computer Organization &amp; Architecture project demonstrating how GPU parallelism
+        can accelerate machine-learning inference compared with traditional CPU execution.
+      </p>
+      <div class="hero-badges">
+        <span class="badge">Demonstration Frontend</span>
+        <span class="badge badge-warning">Mock Data Only</span>
+      </div>
+      <a href="#classify" class="btn btn-primary">Start Classification →</a>
+    </div>
+  </section>
+
+  <!-- ========== CLASSIFICATION SECTION ========== -->
+  <section id="classify" class="section">
+    <div class="container">
+      <h2 class="section-title">Text Classification</h2>
+      <p class="section-desc">
+        Enter any English text. Choose CPU, GPU, or Compare Both.
+        Results shown below are <strong>demonstration values only</strong> — they are not real experimental measurements.
+      </p>
+
+      <div class="card classify-card">
+        <label for="inputText" class="label">Input Text</label>
+        <textarea id="inputText" placeholder="Example: The product quality is excellent and delivery was fast..."></textarea>
+
+        <div class="button-row">
+          <button class="btn btn-cpu" onclick="runInference('cpu')">
+            <span class="btn-icon">🖥️</span> Run on CPU
+          </button>
+          <button class="btn btn-gpu" onclick="runInference('gpu')">
+            <span class="btn-icon">⚡</span> Run on GPU
+          </button>
+          <button class="btn btn-compare" onclick="runInference('both')">
+            <span class="btn-icon">⚖️</span> Compare Both
+          </button>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span id="loadingText">Processing...</span>
+        </div>
+
+        <!-- Classification Result -->
+        <div id="resultBox" class="result-box hidden">
+          <h3>Classification Result <span class="demo-tag">DEMO</span></h3>
+          <div class="result-grid">
+            <div>
+              <span class="result-label">Predicted Class</span>
+              <span id="predClass" class="result-value">—</span>
+            </div>
+            <div>
+              <span class="result-label">Confidence</span>
+              <span id="predConf" class="result-value">—</span>
+            </div>
+            <div>
+              <span class="result-label">Device Used</span>
+              <span id="predDevice" class="result-value">—</span>
+            </div>
+          </div>
+          <p class="demo-note">⚠️ These numbers are randomly generated demonstration values for UI testing only.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PERFORMANCE DASHBOARD ========== -->
+  <section id="dashboard" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title">Performance Dashboard</h2>
+      <p class="section-desc">
+        All metrics below are <strong>clearly labelled demonstration data</strong>.
+        They illustrate typical relative differences between CPU and GPU but are <em>not</em> actual experimental results from this project.
+      </p>
+
+      <!-- Performance Cards -->
+      <div class="cards-grid">
+        <div class="perf-card">
+          <div class="perf-card-header">
+            <span class="perf-icon">⏱️</span>
+            <h3>Inference Time</h3>
+          </div>
+          <div class="perf-values">
+            <div class="perf-item">
+              <span class="device-label cpu">CPU</span>
+              <span class="perf-number" id="cardInferCPU">48 ms</span>
+            </div>
+            <div class="perf-item">
+              <span class="device-label gpu">GPU</span>
+              <span class="perf-number" id="cardInferGPU">9 ms</span>
+            </div>
+          </div>
+          <p class="perf-note">Lower is better · Demo data</p>
+        </div>
+
+        <div class="perf-card">
+          <div class="perf-card-header">
+            <span class="perf-icon">🚀</span>
+            <h3>Throughput</h3>
+          </div>
+          <div class="perf-values">
+            <div class="perf-item">
+              <span class="device-label cpu">CPU</span>
+              <span class="perf-number" id="cardThroughCPU">21 /s</span>
+            </div>
+            <div class="perf-item">
+              <span class="device-label gpu">GPU</span>
+              <span class="perf-number" id="cardThroughGPU">112 /s</span>
+            </div>
+          </div>
+          <p class="perf-note">Higher is better · Demo data</p>
+        </div>
+
+        <div class="perf-card">
+          <div class="perf-card-header">
+            <span class="perf-icon">💾</span>
+            <h3>Memory Usage</h3>
+          </div>
+          <div class="perf-values">
+            <div class="perf-item">
+              <span class="device-label cpu">CPU</span>
+              <span class="perf-number" id="cardMemCPU">320 MB</span>
+            </div>
+            <div class="perf-item">
+              <span class="device-label gpu">GPU</span>
+              <span class="perf-number" id="cardMemGPU">780 MB</span>
+            </div>
+          </div>
+          <p class="perf-note">VRAM vs System RAM · Demo data</p>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Inference Time Comparison <span class="demo-tag">DEMO</span></h3>
+          <div class="chart-wrapper">
+            <canvas id="inferenceChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Throughput Comparison <span class="demo-tag">DEMO</span></h3>
+          <div class="chart-wrapper">
+            <canvas id="throughputChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Memory Usage Comparison <span class="demo-tag">DEMO</span></h3>
+          <div class="chart-wrapper">
+            <canvas id="memoryChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Table -->
+      <div class="card table-card">
+        <h3>Summary Table <span class="demo-tag">DEMO</span></h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>CPU (Demo)</th>
+                <th>GPU (Demo)</th>
+                <th>Relative Advantage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Avg. Inference Time</td>
+                <td>48 ms</td>
+                <td>9 ms</td>
+                <td class="advantage-gpu">GPU ≈ 5.3× faster</td>
+              </tr>
+              <tr>
+                <td>Throughput</td>
+                <td>21 samples/s</td>
+                <td>112 samples/s</td>
+                <td class="advantage-gpu">GPU ≈ 5.3× higher</td>
+              </tr>
+              <tr>
+                <td>Memory Footprint</td>
+                <td>320 MB (RAM)</td>
+                <td>780 MB (VRAM)</td>
+                <td class="advantage-cpu">CPU uses less memory</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="demo-note" style="margin-top:1rem;">
+          ⚠️ All values in this table are fixed demonstration numbers chosen to illustrate typical architectural differences.
+          They will be replaced by real measurements once the backend and trained model are connected.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ABOUT / PROJECT INFO ========== -->
+  <section id="about" class="section">
+    <div class="container">
+      <h2 class="section-title">About This Project</h2>
+      <div class="about-grid">
+        <div class="card">
+          <h3>Objective</h3>
+          <p>
+            Compare the architectural performance of CPU versus GPU when running
+            a text-classification workload, focusing on inference latency, throughput,
+            and memory consumption.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Why GPUs Are Usually Faster</h3>
+          <p>
+            Neural-network inference is dominated by large matrix multiplications.
+            GPUs contain thousands of lightweight cores that execute these operations
+            in parallel, while CPUs have fewer, more complex cores. This massive
+            parallelism is the main reason for the observed speed-up.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Current Status</h3>
+          <p>
+            This is the <strong>frontend demonstration</strong> only.
+            Classification results and performance numbers are simulated.
+            A real model and measurement backend will be integrated later.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="container">
+      <p>Computer Organization and Architecture (COA) Project — Third Year B.Tech</p>
+      <p class="footer-note">Frontend uses demonstration data only. Not real experimental results.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
