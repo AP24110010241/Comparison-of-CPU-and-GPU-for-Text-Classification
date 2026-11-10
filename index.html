@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CPU vs GPU Text Classification | COA Project</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">COA Project</div>
+    <ul class="nav-links">
+      <li><a href="#home" class="nav-link active">Home</a></li>
+      <li><a href="#classify" class="nav-link">Classify</a></li>
+      <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
+      <li><a href="#about" class="nav-link">About</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle">☰</button>
+  </nav>
+
+  <section id="home" class="hero">
+    <div class="container">
+      <h1>Architectural Performance Comparison of<br>CPU and GPU for Text Classification</h1>
+      <p class="hero-subtitle">
+        IMDb sentiment analysis with real TF-IDF + Logistic Regression model.
+        CPU inference is measured; GPU time uses speedup from the project notebook.
+      </p>
+      <div class="hero-badges">
+        <span class="badge">Real Model Backend</span>
+        <span class="badge badge-warning">IMDb Dataset</span>
+      </div>
+      <a href="#classify" class="btn btn-primary">Start Classification →</a>
+    </div>
+  </section>
+
+  <section id="classify" class="section">
+    <div class="container">
+      <h2 class="section-title">Text Classification</h2>
+      <p class="section-desc">Enter a movie review. Results use the trained IMDb model.</p>
+
+      <div class="card classify-card">
+        <label for="inputText" class="label">Input Text</label>
+        <textarea id="inputText" placeholder="Example: This movie was excellent and the acting was amazing..."></textarea>
+        <div class="button-row">
+          <button class="btn btn-cpu" onclick="runInference('cpu')">Run on CPU</button>
+          <button class="btn btn-gpu" onclick="runInference('gpu')">Run on GPU</button>
+          <button class="btn btn-compare" onclick="runInference('both')">Compare Both</button>
+        </div>
+
+        <div id="loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span id="loadingText">Processing...</span>
+        </div>
+
+        <div id="resultBox" class="result-box hidden">
+          <h3>Classification Result</h3>
+          <div class="result-grid">
+            <div><span class="result-label">Predicted Class</span><span id="predClass" class="result-value">-</span></div>
+            <div><span class="result-label">Confidence</span><span id="predConf" class="result-value">-</span></div>
+            <div><span class="result-label">Device Used</span><span id="predDevice" class="result-value">-</span></div>
+          </div>
+        </div>
+
+        <div id="compareBox" class="card hidden" style="margin-top:1.5rem;">
+          <h3>CPU vs GPU Comparison</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+            <div style="background:#fef2f2;padding:1rem;border-radius:8px;text-align:center;">
+              <div style="font-weight:700;color:#ef4444;margin-bottom:0.5rem;">CPU</div>
+              <div>Time: <strong id="cpuTime">-</strong></div>
+              <div style="margin-top:0.3rem;">Class: <strong id="cpuClass">-</strong></div>
+            </div>
+            <div style="background:#f0fdf4;padding:1rem;border-radius:8px;text-align:center;">
+              <div style="font-weight:700;color:#22c55e;margin-bottom:0.5rem;">GPU</div>
+              <div>Time: <strong id="gpuTime">-</strong></div>
+              <div style="margin-top:0.3rem;">Class: <strong id="gpuClass">-</strong></div>
+            </div>
+          </div>
+          <p style="margin-top:1rem;text-align:center;font-weight:600;">
+            Speedup: <span id="speedupValue" style="color:#7c3aed;">-</span>
+          </p>
+        </div>
+
+        <div id="liveGraphCard" class="card hidden" style="margin-top:1.5rem;">
+          <h3>Live Performance Graph</h3>
+          <div class="chart-wrapper" style="height:260px;"><canvas id="liveChart"></canvas></div>
+        </div>
+
+        <div id="historyCard" class="card hidden" style="margin-top:1.5rem;">
+          <h3>Run History</h3>
+          <div style="overflow-x:auto;margin-top:0.75rem;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+              <thead>
+                <tr style="background:#f1f5f9;">
+                  <th style="padding:0.6rem;text-align:left;">Time</th>
+                  <th style="padding:0.6rem;text-align:left;">Device</th>
+                  <th style="padding:0.6rem;text-align:left;">Class</th>
+                  <th style="padding:0.6rem;text-align:left;">Confidence</th>
+                  <th style="padding:0.6rem;text-align:left;">Inference</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+          <button onclick="clearHistory()" class="btn" style="margin-top:1rem;background:#64748b;">Clear History</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="dashboard" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title">Performance Dashboard</h2>
+      <p class="section-desc">Values update after each classification run (CPU measured, GPU estimated).</p>
+      <div class="cards-grid">
+        <div class="perf-card">
+          <div class="perf-card-header"><h3>Inference Time</h3></div>
+          <div class="perf-values">
+            <div class="perf-item"><span class="device-label cpu">CPU</span><span class="perf-number" id="dashCpuTime">48 ms</span></div>
+            <div class="perf-item"><span class="device-label gpu">GPU</span><span class="perf-number" id="dashGpuTime">9 ms</span></div>
+          </div>
+        </div>
+        <div class="perf-card">
+          <div class="perf-card-header"><h3>Throughput</h3></div>
+          <div class="perf-values">
+            <div class="perf-item"><span class="device-label cpu">CPU</span><span class="perf-number" id="dashCpuThrough">21 /s</span></div>
+            <div class="perf-item"><span class="device-label gpu">GPU</span><span class="perf-number" id="dashGpuThrough">112 /s</span></div>
+          </div>
+        </div>
+        <div class="perf-card">
+          <div class="perf-card-header"><h3>Memory Usage</h3></div>
+          <div class="perf-values">
+            <div class="perf-item"><span class="device-label cpu">CPU</span><span class="perf-number">320 MB</span></div>
+            <div class="perf-item"><span class="device-label gpu">GPU</span><span class="perf-number">780 MB</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Inference Time</h3><div class="chart-wrapper"><canvas id="inferenceChart"></canvas></div></div>
+        <div class="chart-card"><h3>Throughput</h3><div class="chart-wrapper"><canvas id="throughputChart"></canvas></div></div>
+        <div class="chart-card"><h3>Memory Usage</h3><div class="chart-wrapper"><canvas id="memoryChart"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="section">
+    <div class="container">
+      <h2 class="section-title">About This Project</h2>
+      <div class="about-grid">
+        <div class="card">
+          <h3>Objective</h3>
+          <p>Compare CPU vs GPU performance for IMDb sentiment classification (text classification workload).</p>
+        </div>
+        <div class="card">
+          <h3>Model</h3>
+          <p>TF-IDF + Logistic Regression trained on IMDb reviews (same approach as the project notebook).</p>
+        </div>
+        <div class="card">
+          <h3>CPU vs GPU</h3>
+          <p>CPU time is measured on this machine. GPU time is estimated using the speedup observed when training the neural net on GPU in the notebook.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>Computer Organization and Architecture (COA) Project — IMDb Sentiment Analysis</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
